@@ -8,19 +8,21 @@ tic;
 global sigma
 sigma = 0.05;
 % tol = 1e-11;
-dt = 0.01;
+dt = 0.05;
 dx = 0.2;
-T = 20;
+T = 1000;
 t = 0:dt:T;
 L = 10;
-kappa = 10;
+kappa = -2;
 x = -L:dx:L-dx;
 nt = length(t);
 nx = length(x);
 phi0 = zeros(nt,nx);
 var_x2 = zeros(nt,1);
+% field = x.^2/2;
+field = 2*(2*rand(1,nx)-1);
 
-phi_0 = exp(-x.^2)/sqrt(2*pi);
+phi_0 = exp(-x.^2/2)/sqrt(2*pi);
 phi0(1,:) = phi_0./sqrt(sum(abs(phi_0).^2));
 var_x2(1) = wmean(x.^2,abs(phi0(1,:)).^2,dx);
 
@@ -35,13 +37,13 @@ end
 
 for i = 2:nt
 %     V(i,:) = f(x+v*t(i));
-    phi1 = exp(-1i*dt*(x.^2/2+kappa*abs(phi0(i-1,:)).^2)/2).*phi0(i-1,:);
+    phi1 = exp(-1i*dt*(field+kappa*abs(phi0(i-1,:)).^2)/2).*phi0(i-1,:);
 %     phi1f = phi1*exp(-1i*(x'+L)*miu);
 %     phi2 = pha2.*phi1f*exp(1i*miu'*(x+L))/nx;
     phi1f = nufft(phi1,x+L,miu/(2*pi));
     phi2 = nufft(pha2.*phi1f,-miu/(2*pi),x+L)/nx;    
     
-    phi0(i,:) = exp(-1i*dt*(x.^2/2+kappa*abs(phi0(i-1,:)).^2)/2).*phi2;
+    phi0(i,:) = exp(-1i*dt*(field+kappa*abs(phi0(i-1,:)).^2)/2).*phi2;
     var_x2(i) = wmean(x.^2,abs(phi0(i,:)).^2,dx);
 %     phi0(i,:) = phi0(i,:)./sqrt(s*dx);
 end
