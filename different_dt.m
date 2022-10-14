@@ -9,23 +9,25 @@ tic;
 
 figure;
 
-dt_all = [0.001 0.2 0.5 1];
+dt_all = [0.001 0.2 0.5 0.95 1 2 3];
 ldt = length(dt_all);
-T = 200;
-L = 3;
-K = -1;
-% mu = [-0.5 0];
-mu_A = 2;
-mu = mu_A*(2*rand(1,L)-1);
+T = 100;
+L = 2;
+K = -3;
+mu = [0 0.5];
+% mu_A = 2;
+% mu = mu_A*(2*rand(1,L)-1);
 Tij = gen_H(1,L);
 
-% phi_0 = zeros(L,1);
-% dn = -0.259;
-% phi_0(1) = sqrt((1+dn)/2);
-% phi_0(2) = sqrt((1-dn)/2);
+phi_0 = zeros(L,1);
+dn = -1;
+phi_0(1) = sqrt((1+dn)/2);
+phi_0(2) = sqrt((1-dn)/2);
 
-phi_0 = 2*rand(L,1)-1;
-phi_0 = phi_0./sqrt(sum(abs(phi_0).^2));
+phi_0 = [-0.512012895578133 + 0.508058501746983i;-0.621197245024349 + 0.306322275289446i];
+
+% phi_0 = 2*rand(L,1)-1;
+% phi_0 = phi_0./sqrt(sum(abs(phi_0).^2));
 
 
 % exact ED %%%%%%%%%%%%%%%%%%%%%%%%

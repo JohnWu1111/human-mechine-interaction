@@ -4,60 +4,61 @@ clc;
 format long
 tic;
 
-myseed = 1;
-rng(myseed)
-
-num = 1e4;
-
+dn = 0.05;
 dt = 1;
-T = 0:dt:100;
+T = 0:dt:1000;
 nt = length(T);
 L = 2;
 % L_it = floor(L/2);
 L_it = 1;
-K = -1;
+K = -4;
 mu_A = 2;
 % mu = mu_A*(2*rand(1,L)-1);
-mu = [-0.5 0];
+mu = [0 0.5];
 Tij = gen_H(1,L);
+sign_s = [1 1;1 -1];
 
-result = zeros(num,1);
+ln = 1/dn+1;
+result = cell(ln,2);
+result_t = cell(ln,2);
 
-for j = 1:num
+it = 1;
+for m = 1:ln
+    n1 = (m-1)*dn;
+    n2 = 1-n1;
 
-    % exact ED %%%%%%%%%%%%%%%%%%%%%%%%
+    nn = [n1,n2]';
+    for k = 1:2
+        phi0 = sign_s(:,k).*sqrt(nn);
+        phi = phi0;
+        nit = zeros(L,nt);
+        nit0 = abs(phi).^2;
+        nit(:,1) = abs(phi).^2;
 
-    phi0 = 2*rand(L,1)-1;
-    phi0 = phi0./sqrt(sum(abs(phi0).^2));
-    phi = phi0;
-    nit = zeros(L,nt);
-    nit0 = abs(phi).^2;
-    nit(:,1) = abs(phi).^2;
-
-    for i = 2:nt
-        H = Tij + diag(mu) + K*diag(nit(:,i-1));
-        %     phi = expm(-1i*H*dt)*phi;
-        [V,D] = eig(H);
-        e = diag(D);
-        trans = V'*phi;
-        phi = V*(exp(-1i*e*dt).*trans);
-        nit(:,i) = abs(phi).^2;
+        for i = 2:nt
+            H = Tij + diag(mu) + K*diag(nit(:,i-1));
+            %     phi = expm(-1i*H*dt)*phi;
+            [V,D] = eig(H);
+            e = diag(D);
+            trans = V'*phi;
+            phi = V*(exp(-1i*e*dt).*trans);
+            nit(:,i) = abs(phi).^2;
+        end
+        result{it,k} = nit(:,end);
+        result_t{it,k} = nit;
     end
-    result(j) = nit(1,end);
+    it = it + 1;
 end
-
-figure
-histogram(result,2)
 
 toc;
 
 function Tij = gen_H(s,L)
 Tij = zeros(L);
 count = 0;
-for i = 1:L-1    
+for i = 1:L-1
     Tij(i,i+1) = Tij(i,i+1)-s;
-    Tij(i+1,i) = Tij(i+1,i)-conj(s);    
-    count = count +1;    
+    Tij(i+1,i) = Tij(i+1,i)-conj(s);
+    count = count +1;
 end
 % Tij(L,1) = Tij(L,1)-s;
 % Tij(1,L) = Tij(1,L)-conj(s);
@@ -107,5 +108,5 @@ y = phi + dt*(c1+2*c2+2*c3+c4)/6;
 end
 
 function y = wmean(x,phi,dx)
-    y = sum(x.*phi)*dx;
+y = sum(x.*phi)*dx;
 end
