@@ -4,50 +4,57 @@ clc;
 format long
 tic;
 
-dn = 0.05;
-dt = 1;
+dn = 0.1;
+dt = 10;
 T = 0:dt:1000;
 nt = length(T);
-L = 2;
+L = 4;
 % L_it = floor(L/2);
 L_it = 1;
-K = -4;
+K = -5;
 mu_A = 2;
 % mu = mu_A*(2*rand(1,L)-1);
-mu = [0 0.5];
+mu = [0 0.5 0.7 1];
 Tij = gen_H(1,L);
-sign_s = [1 1;1 -1];
+sign_s = [1 1 1 1 1 1 1 1;1 1 1 1 -1 -1 -1 -1;1 1 -1 -1 1 1 -1 -1;1 -1 1 -1 1 -1 1 -1];
 
 ln = 1/dn+1;
-result = cell(ln,2);
-result_t = cell(ln,2);
+ln_total = ln*(ln+1)*(ln+2)/6;
+result = cell(ln_total,8);
+result_t = cell(ln_total,8);
 
 it = 1;
 for m = 1:ln
-    n1 = (m-1)*dn;
-    n2 = 1-n1;
+    for n= 1:ln-m+1
+        for p = 1:ln-m-n+2
+            n1 = (m-1)*dn;
+            n2 = (n-1)*dn;
+            n3 = (p-1)*dn;
+            n4 = 1-n1-n2-n3;
 
-    nn = [n1,n2]';
-    for k = 1:2
-        phi0 = sign_s(:,k).*sqrt(nn);
-        phi = phi0;
-        nit = zeros(L,nt);
-        nit0 = abs(phi).^2;
-        nit(:,1) = abs(phi).^2;
+            nn = [n1,n2,n3,n4]';
+            for k = 1:8
+                phi0 = sign_s(:,k).*sqrt(nn);
+                phi = phi0;
+                nit = zeros(L,nt);
+                nit0 = abs(phi).^2;
+                nit(:,1) = abs(phi).^2;
 
-        for i = 2:nt
-            H = Tij + diag(mu) + K*diag(nit(:,i-1));
-            %     phi = expm(-1i*H*dt)*phi;
-            [V,D] = eig(H);
-            e = diag(D);
-            trans = V'*phi;
-            phi = V*(exp(-1i*e*dt).*trans);
-            nit(:,i) = abs(phi).^2;
+                for i = 2:nt
+                    H = Tij + diag(mu) + K*diag(nit(:,i-1));
+                    %     phi = expm(-1i*H*dt)*phi;
+                    [V,D] = eig(H);
+                    e = diag(D);
+                    trans = V'*phi;
+                    phi = V*(exp(-1i*e*dt).*trans);
+                    nit(:,i) = abs(phi).^2;
+                end
+                result{it,k} = nit(:,end);
+                result_t{it,k} = nit;
+            end
+            it = it + 1;
         end
-        result{it,k} = nit(:,end);
-        result_t{it,k} = nit;
     end
-    it = it + 1;
 end
 
 toc;

@@ -4,26 +4,26 @@ clc;
 format long
 tic;
 
-myseed = 1;
+myseed = 2;
 rng(myseed)
 
-dt = 1;
-T = 0:dt:100;
+dt = 0.1;
+T = 0:dt:1000;
 nt = length(T);
-L = 2;
+L = 100;
 % L_it = floor(L/2);
-L_it = 1;
-K = -1;
+L_it = 59;
+K = -10;
 mu_A = 2;
-% mu = mu_A*(2*rand(1,L)-1);
-mu = [-0.5 0];
+mu = mu_A*(2*rand(1,L)-1);
+% mu = [-0.5 0];
 Tij = gen_H(1,L);
 
 phi = zeros(L,1);
-% phi(L_it) = 1;
-dn = -0.16513;
-phi(1) = -sqrt((1+dn)/2);
-phi(2) = sqrt(1-(1+dn)/2);
+phi(L_it) = 1;
+% dn = -0.16513;
+% phi(1) = -sqrt((1+dn)/2);
+% phi(2) = sqrt(1-(1+dn)/2);
 % phi = rand(L,1);
 % phi = phi./sqrt(sum(abs(phi).^2));
 
@@ -52,7 +52,7 @@ for i = 2:nt
     nit(:,i) = abs(phi).^2;
     pos_mean(i) = wmean((1:L)',abs(phi).^2,1);
     var_x2(i) = sqrt(wmean(((1:L)'-pos_mean(i)).^2,abs(phi).^2,1));
-    Et(i) = phi'*H*phi;
+    Et(i) = real(phi'*H*phi);
 end
 
 % runge-kuta %%%%%%%%%%%%%%%%%%%%%%%%%

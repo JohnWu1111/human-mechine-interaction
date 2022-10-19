@@ -4,31 +4,36 @@ clc;
 format long
 tic;
 
-% myseed = 1;
-% rng(myseed)
+myseed = 6;
+rng(myseed)
 
 figure;
 
-dt_all = [0.001 0.2 0.5 0.95 1 2 3];
+% dt_all = [0.05 0.1 0.2 0.3 0.4 0.5];
+dt_all = 1:1:10;
 ldt = length(dt_all);
-T = 100;
-L = 2;
-K = -3;
-mu = [0 0.5];
-% mu_A = 2;
-% mu = mu_A*(2*rand(1,L)-1);
+T = 100000;
+L = 8;
+L_it = 4;
+K = -0;
+% mu = [0 0.5];
+mu_A = 2;
+mu = mu_A*(2*rand(1,L)-1);
+% mu(L_it) = 0;
 Tij = gen_H(1,L);
 
 phi_0 = zeros(L,1);
-dn = -1;
-phi_0(1) = sqrt((1+dn)/2);
-phi_0(2) = sqrt((1-dn)/2);
+phi_0(L_it) = 1;
+% dn = -1;
+% phi_0(1) = sqrt((1+dn)/2);
+% phi_0(2) = sqrt((1-dn)/2);
 
-phi_0 = [-0.512012895578133 + 0.508058501746983i;-0.621197245024349 + 0.306322275289446i];
+% phi_0 = [-0.512012895578133 + 0.508058501746983i;-0.621197245024349 + 0.306322275289446i];
 
 % phi_0 = 2*rand(L,1)-1;
 % phi_0 = phi_0./sqrt(sum(abs(phi_0).^2));
 
+nit_final = zeros(1,ldt);
 
 % exact ED %%%%%%%%%%%%%%%%%%%%%%%%
 for n = 1:ldt
@@ -59,18 +64,25 @@ for n = 1:ldt
         Et(i) = phi'*H*phi;
     end
 
-    plot(t,nit(1,:),'LineWidth',2)
+    nit_final(n) = mean(nit(L_it,floor(0.9*nt):end));
+
+    plot(t,nit(L_it,:),'LineWidth',2)
     hold on
 end
 
 xlabel('time','FontSize',14)
-ylabel('<n_1>','FontSize',14)
+ylabel('<n_{it}>','FontSize',14)
 
 le = cell(1, ldt);
 for i = 1:ldt
     le{i} = strcat('dt = ', num2str(dt_all(i)));
 end
 legend(le)
+
+figure;
+plot(dt_all,nit_final)
+xlabel('dt','FontSize',14)
+ylabel('<n_{it} final>','FontSize',14)
 
 toc;
 
