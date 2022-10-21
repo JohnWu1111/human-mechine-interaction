@@ -4,24 +4,24 @@ clc;
 format long
 tic;
 
-myseed = 2;
+myseed = 3;
 rng(myseed)
 
-dt = 0.1;
-T = 0:dt:1000;
+dt = 0.5;
+T = 0:dt:10000*dt;
 nt = length(T);
-L = 100;
+L = 20;
 % L_it = floor(L/2);
-L_it = 59;
-K = -10;
+L_it = 17;
+K = -1;
 mu_A = 2;
 mu = mu_A*(2*rand(1,L)-1);
-% mu = [-0.5 0];
+% mu = [0.5 0];
 Tij = gen_H(1,L);
 
 phi = zeros(L,1);
 phi(L_it) = 1;
-% dn = -0.16513;
+% dn = 0.126;
 % phi(1) = -sqrt((1+dn)/2);
 % phi(2) = sqrt(1-(1+dn)/2);
 % phi = rand(L,1);
@@ -118,7 +118,7 @@ plot(T,pos_mean)
 xlabel('T')
 ylabel('pos_mean')
 
-saveas(gcf,strcat('figures\',filename,'.fig'))
+% saveas(gcf,strcat('figures\',filename,'.fig'))
 
 mean_dE = mean(dEt(floor(nt*0.9):end));
 
@@ -132,8 +132,8 @@ for i = 1:L-1
     Tij(i+1,i) = Tij(i+1,i)-conj(s);    
     count = count +1;    
 end
-% Tij(L,1) = Tij(L,1)-s;
-% Tij(1,L) = Tij(1,L)-conj(s);
+Tij(L,1) = Tij(L,1)-s;
+Tij(1,L) = Tij(1,L)-conj(s);
 count = count +1;
 end
 

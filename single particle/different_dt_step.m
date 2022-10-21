@@ -7,13 +7,14 @@ tic;
 myseed = 2;
 rng(myseed)
 
-dt_all = [0.05 0.1 0.2 0.3 0.4 0.5];
+% dt_all = [0.05 0.1 0.2 0.3 0.4 0.5];
 % dt_all = 1:1:10;
+dt_all = [0.1 0.2 0.4 0.6];
 ldt = length(dt_all);
-step = 10000;
-L = 50;
-L_it = 25;
-K = -5;
+step = 1000;
+L = 2;
+L_it = 1;
+K = -1;
 % mu = [0 0.5];
 mu_A = 2;
 mu = mu_A*(2*rand(1,L)-1);
@@ -65,7 +66,7 @@ for n = 1:ldt
         Et(i) = phi'*H*phi;
     end
 
-    nit_final(n) = mean(nit(L_it,floor(0.9*nt):end));
+    nit_final(n) = mean(nit(1,floor(0.9*nt):end));
 
     plot(1:step+1,nit(L_it,:),'LineWidth',2)
     hold on

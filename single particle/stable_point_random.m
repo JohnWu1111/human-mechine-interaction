@@ -4,66 +4,66 @@ clc;
 format long
 tic;
 
-myseed = 2;
-rng(myseed*1e5)
+myseed = 3;
+rng(myseed)
 
-dn = 0.2;
-dt = 0.2;
-T = 0:dt:10000*dt;
-nt = length(T);
-L = 4;
-% L_it = floor(L/2);
-L_it = 1;
+dt = 0.5;
+L = 20;
 K = -1;
+step_max = 1e6;
 mu_A = 2;
 mu = mu_A*(2*rand(1,L)-1);
-% mu = [0 0.5 0.7 1];
+trial_num = 10;
 Tij = gen_H(1,L);
-sign_s = [1 1 1 1 1 1 1 1;1 1 1 1 -1 -1 -1 -1;1 1 -1 -1 1 1 -1 -1;1 -1 1 -1 1 -1 1 -1];
+H1 = Tij + diag(mu);
 
-ln = 1/dn+1;
-ln_total = ln*(ln+1)*(ln+2)/6;
-result = cell(ln_total,8);
-result_t = cell(ln_total,8);
-mean_pos = zeros(ln_total,8);
-std_pos = zeros(ln_total,8);
-n0_distri = zeros(ln_total,L);
+result = zeros(trial_num,L);
+result_t = cell(trial_num,1);
+osc_store = zeros(trial_num,1);
+step_store = zeros(trial_num,1);
+nit_mean_final = zeros(trial_num,1);
+x = (1:L)';
 
 it = 1;
-for m = 1:ln
-    for n= 1:ln-m+1
-        for p = 1:ln-m-n+2
-            n1 = (m-1)*dn;
-            n2 = (n-1)*dn;
-            n3 = (p-1)*dn;
-            n4 = 1-n1-n2-n3;
+for j = 1:trial_num
+    phi_0 = rand(L,1);
+%     phi_0 = rand(L,1);
+    phi_0 = phi_0./sqrt(sum(abs(phi_0).^2));
+    nit_0 = abs(phi_0).^2;
 
-            nn = [n1,n2,n3,n4]';
-            n0_distri(it,:) = nn';
-            for k = 1:1
-                phi0 = sign_s(:,k).*sqrt(nn);
-                phi = phi0;
-                nit = zeros(L,nt);
-                nit0 = abs(phi).^2;
-                nit(:,1) = abs(phi).^2;
+    phi = phi_0;
+    nit = nit_0;
 
-                for i = 2:nt
-                    H = Tij + diag(mu) + K*diag(nit(:,i-1));
-                    %     phi = expm(-1i*H*dt)*phi;
-                    [V,D] = eig(H);
-                    e = diag(D);
-                    trans = V'*phi;
-                    phi = V*(exp(-1i*e*dt).*trans);
-                    nit(:,i) = abs(phi).^2;
-                end
-                result{it,k} = nit(:,end);
-                result_t{it,k} = nit;
-                mean_pos(it,k) = wmean(1:L,nit(:,end)',1);
-                std_pos(it,k) = sqrt(wmean(((1:L)-mean_pos(it,k)).^2,nit(:,end)',1));
-            end
-            it = it + 1;
+    step = 1;
+    while true
+        H = H1 + K*diag(nit);
+        [V,D] = eig(H);
+        e = diag(D);
+        trans = V'*phi;
+        fact = exp(-1i*e*dt);
+        temp = fact.*trans;
+        phi = V*temp;
+        nit_new = abs(phi).^2;
+        step = step + 1;
+
+        if step > step_max
+            osc_store(j,1) = 1;
+            break;
         end
+
+        judge = abs(sum(x.*(nit_new -nit)));
+        if judge < 1e-8
+            break
+        end
+        nit = nit_new;
     end
+
+    result_t{j} = nit(:,end);
+    result(j,:) = nit(:,end)';
+
+    nit_mean_final(j) = wmean(x,nit(:,end),1);
+    %         nit_std_final(j,n) = sqrt(wmean(((1:L)-nit_mean_final(j,n)).^2,nit_final',1));
+    step_store(j) = step;
 end
 
 toc;
