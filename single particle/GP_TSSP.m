@@ -9,21 +9,22 @@ global sigma
 sigma = 0.05;
 % tol = 1e-11;
 dt = 0.05;
-dx = 0.2;
+dx = 0.5;
 T = 1000;
 t = 0:dt:T;
-L = 10;
-kappa = -2;
+L = 20;
+kappa = -20;
 x = -L:dx:L-dx;
 nt = length(t);
 nx = length(x);
 phi0 = zeros(nt,nx);
 var_x2 = zeros(nt,1);
 % field = x.^2/2;
-field = 2*(2*rand(1,nx)-1);
+field = 0*(2*rand(1,nx)-1);
 
-phi_0 = exp(-x.^2/2)/sqrt(2*pi);
-phi0(1,:) = phi_0./sqrt(sum(abs(phi_0).^2));
+% phi_0 = exp(-x.^2/2)/sqrt(2*pi);
+% phi0(1,:) = phi_0./sqrt(sum(abs(phi_0).^2));
+phi0(1,floor(nx/2)) = 1;
 var_x2(1) = wmean(x.^2,abs(phi0(1,:)).^2,dx);
 
 miu = zeros(1,nx);
@@ -56,8 +57,8 @@ E = Ek + Ev;
 toc;
 
 figure;
-% plot(t,var_x2);
-plot(t,E);
+plot(t,var_x2);
+% plot(t,E);
 
 
 function y = f(x)

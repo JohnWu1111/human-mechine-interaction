@@ -4,51 +4,76 @@ clc;
 format long
 tic;
 
-dn = 0.1;
-dt = 9;
-T = 0:dt:1000*dt;
+myseed = 1;
+rng(myseed)
+
+dt = 1;
+T = 0:dt:500*dt;
 nt = length(T);
-L = 2;
+L = 200;
 % L_it = floor(L/2);
-L_it = 1;
-K = -1;
+K_all = [-1 -6];
 mu_A = 2;
-% mu = mu_A*(2*rand(1,L)-1);
-mu = [1 0];
+mu = mu_A*(2*rand(1,L)-1);
+% mu = [0.5 0];
 Tij = gen_H(1,L);
-sign_s = [1 1;1 -1];
+H1 = Tij + diag(mu);
 
-ln = 1/dn+1;
-result = cell(ln,2);
-result_t = cell(ln,2);
+temp = randperm(L);
 
-it = 1;
-for m = 1:ln
-    n1 = (m-1)*dn;
-    n2 = 1-n1;
-
-    nn = [n1,n2]';
-    for k = 1:2
-        phi0 = sign_s(:,k).*sqrt(nn);
-        phi = phi0;
-        nit = zeros(L,nt);
-        nit0 = abs(phi).^2;
-        nit(:,1) = abs(phi).^2;
-
-        for i = 2:nt
-            H = Tij + diag(mu) + K*diag(nit(:,i-1));
-            %     phi = expm(-1i*H*dt)*phi;
-            [V,D] = eig(H);
-            e = diag(D);
-            trans = V'*phi;
-            phi = V*(exp(-1i*e*dt).*trans);
-            nit(:,i) = abs(phi).^2;
-        end
-        result{it,k} = nit(:,end);
-        result_t{it,k} = nit;
-    end
-    it = it + 1;
+nit0 = zeros(1,L);
+for i = 1:L/2
+    nit0(temp(i)) = 1;
 end
+
+target = zeros(nt,3);
+target(:,1) = T';
+
+figure;
+for k = 1:2
+    K = K_all(k);
+
+    Et = zeros(1,nt);
+    order = zeros(1,nt);
+
+    G = diag(nit0);
+    nit(:,1) = nit0;
+    order(1) = nit(:,1)'*((-1).^(nit0'+1))/L;
+
+    H = H1 + K*diag(nit(:,1));
+    Et(1) = cal_energy(G,mu,K);
+
+    % expH %%%%%%%%%%%%%%%%%%%%%%%%
+
+    for i = 2:nt
+        H = H1 + K*diag(nit(:,i-1));
+        %     expH = expm(-1i*H*dt);
+        %     G = expH'*G*expH;
+        [V,D] = eig(H);
+        e = diag(D);
+        expH = exp(-1i*e*dt);
+        V_trans = V';
+        expHV = expH.*V_trans;
+        G = V_trans*G*V;
+        G = expHV'*G*expHV;
+        nit(:,i) = real(diag(G));
+        Et(i) = cal_energy(G,mu,K);
+        order(i) = nit(:,i)'*((-1).^(nit0'+1))/L;
+    end
+    target(:,k+1) = order';
+
+    plot(T,order,'LineWidth',2)
+    hold on
+
+end
+xlabel('T','FontSize',14)
+ylabel('order parameter','FontSize',14)
+
+le = cell(1, 2);
+for i = 1:2
+    le{i} = strcat('K = ', num2str(K_all(i)));
+end
+legend(le)
 
 toc;
 
@@ -109,4 +134,15 @@ end
 
 function y = wmean(x,phi,dx)
 y = sum(x.*phi)*dx;
+end
+
+function y = cal_energy(G,mu,K)
+y = 0;
+L = length(G);
+for i = 1:L-1
+    y = y - G(i,i+1) - G(i+1,i);
+end
+y = y - G(L,1) - G(1,L);
+y = y + (mu+K)*diag(G);
+y = real(y);
 end

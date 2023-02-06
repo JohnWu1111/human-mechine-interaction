@@ -5,18 +5,19 @@ format long
 tic;
 
 myseed = 14;
-rng(myseed)
+% rng(myseed)
 
-dt = 0.01;
-T = 0:dt:1000*dt;
+dt = 1;
+T = 0:dt:20000*dt;
 nt = length(T);
 L = 2;
 % L_it = floor(L/2);
 L_it = 1;
 K = -4;
-mu_A = 2;
+sigma = 0.25;
+mu_A = 0;
 % mu = mu_A*(2*rand(1,L)-1);
-mu = [0 0];
+mu = [0 0.5];
 Tij = gen_H(1,L);
 
 phi = zeros(L,1);
@@ -36,7 +37,7 @@ phit(:,1) = phi;
 etat = zeros(nt,1);
 etat(1) = phi(1)/phi(2);
 
-H = Tij + diag(mu) + K*diag(nit(:,1));
+H = Tij + diag(mu) + K*diag(nit(:,1)).*(1+randn(L,1)*sigma);
 Et(1) = phi'*H*phi;
 pos_mean = zeros(nt,1);
 var_x2 = zeros(nt,1);
@@ -47,7 +48,7 @@ var_x2(1) = sqrt(wmean(((1:L)'-pos_mean(1)).^2,abs(phi).^2,1));
 % exact ED %%%%%%%%%%%%%%%%%%%%%%%%
 
 for i = 2:nt
-    H = Tij + diag(mu) + K*diag(nit(:,i-1));
+    H = Tij + diag(mu) + K*diag(nit(:,i-1)).*(1+randn(L,1)*sigma);
 %     phi = expm(-1i*H*dt)*phi;
     [V,D] = eig(H);
     e = diag(D);

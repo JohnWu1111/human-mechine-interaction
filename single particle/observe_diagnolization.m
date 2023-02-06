@@ -8,10 +8,10 @@ myseed = 5;
 rng(myseed)
 
 step = 1000;
-L = 10;
+L = 50;
 K = -1;
-mu = 2*(2*rand(L,1)-1);
-L_it = 2;
+mu = 0*(2*rand(L,1)-1);
+L_it = 25;
 % for i = 1:6
 %     ni = rand(L,1);
 % end
@@ -26,30 +26,34 @@ E_step = zeros(1,step);
 target = 1;
 for i = 2:step
     H = Tij + diag(mu) + K*diag(nit(:,i-1));
-    %     [V,D] = eigs(sparse(H),3,'smallestreal');
-    [V,D] = eig(H);
-    %     [~,it] = max(V(L_it,:).^2);
+    [V,D] = eigs(sparse(H),1,'smallestreal');
+    nit(:,i) = abs(V).^2;
+    E_step(i) = D;
 
-    VV = V.^2;
-    [~,peak_pos] = max(VV.^2);
-    cand = find(peak_pos == L_it);
-    if isempty(cand)
-        break
-    elseif length(cand) == 1
-        it = cand;
-    else
-        VV_cand = VV(:,cand);
-        [~,it] = max(VV(L_it,:));
-    end
-    
-    nit(:,i) = abs(V(:,it)).^2;
-    E_step(i) = D(it,it);
+%     [V,D] = eig(H);
+%     %     [~,it] = max(V(L_it,:).^2);
+% 
+%     VV = V.^2;
+%     [~,peak_pos] = max(VV);
+%     cand = find(peak_pos == L_it);
+%     if isempty(cand)
+%         break
+%     elseif length(cand) == 1
+%         it = cand;
+%     else
+%         VV_cand = VV(:,cand);
+%         [~,it] = max(VV(L_it,:));
+%     end
+%     
+%     nit(:,i) = abs(V(:,it)).^2;
+%     E_step(i) = D(it,it);
 end
 
 mean_pos = sum((1:L)'.*nit(:,end));
 
 figure;
-plot(1:step,nit(L_it,:))
+% plot(1:step,nit(L_it,:))
+plot(1:L,nit(:,end)')
 
 dt = 0.5;
 T = 0:dt:1000;

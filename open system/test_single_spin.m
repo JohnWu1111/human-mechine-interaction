@@ -8,31 +8,36 @@ myseed = 14;
 rng(myseed)
 
 dt = 0.01;
-T = 0:dt:1000*dt;
+T = 0:dt:10000*dt;
 nt = length(T);
 L = 2;
 % L_it = floor(L/2);
 L_it = 1;
-K = -4;
+K = -0;
 mu_A = 2;
 % mu = mu_A*(2*rand(1,L)-1);
 mu = [0 0];
 Tij = gen_H(1,L);
+gamma = 0.1;
 
 phi = zeros(L,1);
 phi(L_it) = 1;
-% dn = 0.1;
+% dn = 1;
 % phi(1) = sqrt((1+dn)/2);
 % phi(2) = sqrt(1-(1+dn)/2);
 % phi = rand(L,1);
 % phi = phi./sqrt(sum(abs(phi).^2));
 
+rho = phi*phi';
+rho = rho';
+rho = rho(:);
+
 Et = zeros(1,nt);
 nit = zeros(L,nt);
-phit = zeros(L,nt);
+rhot = zeros(L^2,nt);
 nit0 = abs(phi).^2;
 nit(:,1) = abs(phi).^2;
-phit(:,1) = phi;
+rhot(:,1) = rho;
 etat = zeros(nt,1);
 etat(1) = phi(1)/phi(2);
 
@@ -43,22 +48,32 @@ var_x2 = zeros(nt,1);
 pos_mean(1) = wmean((1:L)',abs(phi).^2,1);
 var_x2(1) = sqrt(wmean(((1:L)'-pos_mean(1)).^2,abs(phi).^2,1));
 
+S = zeros(1,nt);
+% rho_M = col2mat(rho);
+S(1) = 0;
+
 
 % exact ED %%%%%%%%%%%%%%%%%%%%%%%%
 
 for i = 2:nt
     H = Tij + diag(mu) + K*diag(nit(:,i-1));
 %     phi = expm(-1i*H*dt)*phi;
-    [V,D] = eig(H);
+    Liou = gen_liou(H,gamma);
+    [V,D] = eig(Liou);
     e = diag(D);
-    trans = V'*phi;
-    phi = V*(exp(-1i*e*dt).*trans);
-    nit(:,i) = abs(phi).^2;
-    phit(:,i) = abs(phi);
+    trans = V\rho;
+%     rho = V*(exp(e*dt).*trans);
+    rho = expm(Liou*dt)*rho;
+    temp = (1:L).^2;
+    nit(:,i) = real(rho(temp'));
+    rhot(:,i) = rho;
     etat(i) = phi(1)/phi(2);
     pos_mean(i) = wmean((1:L)',nit(:,i),1);
     var_x2(i) = sqrt(wmean(((1:L)'-pos_mean(i)).^2,nit(:,i),1));
-    Et(i) = real(phi'*H*phi);
+    H = H';
+    Et(i) = real(sum(H(:).*rho));
+    rho_M = col2mat(rho);
+    S(i) = -trace(rho_M*logm(rho_M));
 end
 
 % runge-kuta %%%%%%%%%%%%%%%%%%%%%%%%%
@@ -72,27 +87,6 @@ end
 %     var_x2(i) = sqrt(wmean(((1:L)'-pos_mean(i)).^2,nit(:,i),1));
 %     Et(i) = real(phi'*H*phi);
 % end
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-% TSSP %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-% miu= -pi + (0:L-1)*2*pi/L;
-% miu = miu';
-% pha2 = exp(-1i*dt*2*cos(miu));
-% for i = 2:nt
-%     phi1 = exp(-1i*dt*(mu'+K*abs(phi).^2)/2).*phi;
-%     phi1f = nufft(phi1,1:L,miu/(2*pi));
-%     phi2 = nufft(pha2.*phi1f,-miu/(2*pi),1:L)/L;    
-%     
-%     phi = exp(-1i*dt*(mu'+K*abs(phi).^2)/2).*phi2;
-%     nit(:,i) = abs(phi).^2;
-%     pos_mean(i) = wmean((1:L)',nit(:,i),1);
-%     var_x2(i) = sqrt(wmean(((1:L)'-pos_mean(i)).^2,nit(:,i),1));
-%     Et(i) = real(phi'*H*phi);
-% end
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 filename = strcat('L = ',num2str(L), ', mu_A = ', num2str(mu_A), ', K = ', num2str(K), ', seed = ', num2str(myseed), ', dt = ', num2str(dt),', L_it = ',num2str(L_it));
 figure('Name',filename);
@@ -193,4 +187,45 @@ end
 
 function y = wmean(x,phi,dx)
     y = sum(x.*phi)*dx;
+end
+
+function y = gen_liou(H,gamma)
+len = length(H);
+y1 = zeros(len^2);
+
+for a = 1:len % # of row in left
+    for b = 1:len % # of col in right
+        for j = 1:len % # of multiplier
+            Liou_row = (a-1)*len+b;
+            Liou_col1 = (j-1)*len+b;
+            Liou_col2 = (a-1)*len+j;
+            y1(Liou_row,Liou_col1) = y1(Liou_row,Liou_col1) + H(a,j);
+            y1(Liou_row,Liou_col2) = y1(Liou_row,Liou_col2) - H(j,b);
+        end
+    end
+end
+
+y2 = zeros(len^2);
+for i = 1:len
+    for j = i+1:len
+        D_row1 = (i-1)*len+j;
+        D_row2 = (j-1)*len+i;
+        y2(D_row1,D_row1) = 1;
+        y2(D_row2,D_row2) = 1;
+    end
+end
+y = -1i*y1 - y2*gamma;
+end
+
+function y = col2mat(A)
+    len = length(A);
+    L = sqrt(len);
+    if mod(L,1) ~= 0
+        error("error!")
+    else
+        y = zeros(L);
+        for i = 1:L
+            y(:,i) = A(1+(i-1)*L:i*L);
+        end
+    end
 end
