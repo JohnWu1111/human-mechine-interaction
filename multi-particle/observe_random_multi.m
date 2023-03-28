@@ -10,9 +10,10 @@ rng(myseed)
 dt = 1;
 T = 0:dt:500*dt;
 nt = length(T);
-L = 200;
+L = 100;
 % L_it = floor(L/2);
-K_all = [-1 -6];
+K_all = -1:-0.1:-2;
+nK = length(K_all);
 mu_A = 2;
 mu = mu_A*(2*rand(1,L)-1);
 % mu = [0.5 0];
@@ -28,13 +29,12 @@ end
 
 target = zeros(nt,3);
 target(:,1) = T';
+order = zeros(nK,nt);
 
-figure;
-for k = 1:2
+for k = 1:nK
     K = K_all(k);
 
     Et = zeros(1,nt);
-    order = zeros(1,nt);
 
     G = diag(nit0);
     nit(:,1) = nit0;
@@ -58,22 +58,29 @@ for k = 1:2
         G = expHV'*G*expHV;
         nit(:,i) = real(diag(G));
         Et(i) = cal_energy(G,mu,K);
-        order(i) = nit(:,i)'*((-1).^(nit0'+1))/L;
+        order(k,i) = nit(:,i)'*((-1).^(nit0'+1))/L;
     end
-    target(:,k+1) = order';
-
-    plot(T,order,'LineWidth',2)
-    hold on
+    target(:,k+1) = order(k,:)';
 
 end
+
+figure;
+plot(T,order);
+
 xlabel('T','FontSize',14)
 ylabel('order parameter','FontSize',14)
 
-le = cell(1, 2);
-for i = 1:2
+le = cell(1, nK);
+for i = 1:nK
     le{i} = strcat('K = ', num2str(K_all(i)));
 end
 legend(le)
+
+order_mean = mean(order(:,floor(nt/2):end),2);
+
+figure;
+plot(K_all,order_mean)
+
 
 toc;
 

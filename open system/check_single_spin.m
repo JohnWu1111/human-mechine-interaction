@@ -7,22 +7,22 @@ tic;
 myseed = 14;
 % rng(myseed)
 
-dt = 0.01;
+dt = 1;
 M = 1;
-T = 0:dt:1000*dt;
+T = 0:dt:100000*dt;
 nt = length(T);
 nt_t = (nt-1)*M+1;
 dt = dt/M;
 L = 2;
 % L_it = floor(L/2);
 L_it = 1;
-K = -0;
+K = -4;
 mu_A = 2;
 % mu = mu_A*(2*rand(1,L)-1);
 mu = [0 0];
-gamma = 0.1;
+gamma = 0.01;
 Tij = gen_H(1,L);
-num = 1e2;
+num = 1;
 
 Et_final = zeros(1,nt);
 nit_final = zeros(1,nt);
@@ -56,8 +56,8 @@ for n = 1:num
     H00 = Tij + diag(mu);
     H0 = H00 + K*diag(nit(:,1));
     Et(1) = phi'*H0*phi;
-    pos_mean = zeros(nt,1);
-    var_x2 = zeros(nt,1);
+    pos_mean = zeros(1,nt);
+    var_x2 = zeros(1,nt);
     pos_mean(1) = wmean((1:L)',abs(phi).^2,1);
     var_x2(1) = sqrt(wmean(((1:L)'-pos_mean(1)).^2,abs(phi).^2,1));
 
@@ -65,7 +65,7 @@ for n = 1:num
 
     count = 1;
     for i = 2:nt_t
-        envir = gamma*(randn(1))*[1;-1];
+        envir = sqrt(gamma/(2*dt))*(randn)*[1;-1];
         envir = diag(envir);
 
 %         if mod(i-1,M) == 0
@@ -84,6 +84,7 @@ for n = 1:num
             trans = V2'*phi;
             phi2 = V2*(exp(-1i*e2*dt).*trans);
             phi = (phi1+phi2)/2;
+            phi = phi./sum(abs(phi).^2);
         if mod(i-1,M) == 0
             count = count + 1;
             nit(:,count) = abs(phi).^2;

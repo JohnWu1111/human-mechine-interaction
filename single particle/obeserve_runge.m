@@ -7,25 +7,31 @@ tic;
 myseed = 14;
 rng(myseed)
 
-dt = 0.01;
-T = 0:dt:1000*dt;
+dt = 1;
+T = 0:dt:10000*dt;
 nt = length(T);
-L = 2;
+L = 61;
 % L_it = floor(L/2);
-L_it = 1;
-K = -4;
+L_it = floor(L/2)+1;
+K = -1;
 mu_A = 2;
 % mu = mu_A*(2*rand(1,L)-1);
-mu = [0 0];
+mu = zeros(L,1);
+% Tij = gen_H_2(1,sqrt(L),L);
 Tij = gen_H(1,L);
 
 phi = zeros(L,1);
+% ss = 8;
+% phi(L_it-ss) = 1;
+% phi(L_it+ss) = 1;
 phi(L_it) = 1;
+
 % dn = 0.1;
 % phi(1) = sqrt((1+dn)/2);
 % phi(2) = sqrt(1-(1+dn)/2);
 % phi = rand(L,1);
-% phi = phi./sqrt(sum(abs(phi).^2));
+% phi = rand(L,1) + rand(L,1)*1i;
+phi = phi./sqrt(sum(abs(phi).^2));
 
 Et = zeros(1,nt);
 nit = zeros(L,nt);
@@ -33,11 +39,11 @@ phit = zeros(L,nt);
 nit0 = abs(phi).^2;
 nit(:,1) = abs(phi).^2;
 phit(:,1) = phi;
-etat = zeros(nt,1);
-etat(1) = phi(1)/phi(2);
+% etat = zeros(nt,1);
+% etat(1) = phi(1)/phi(2);
 
 H = Tij + diag(mu) + K*diag(nit(:,1));
-Et(1) = phi'*H*phi;
+Et(1) = real(phi'*H*phi);
 pos_mean = zeros(nt,1);
 var_x2 = zeros(nt,1);
 pos_mean(1) = wmean((1:L)',abs(phi).^2,1);
@@ -55,7 +61,7 @@ for i = 2:nt
     phi = V*(exp(-1i*e*dt).*trans);
     nit(:,i) = abs(phi).^2;
     phit(:,i) = abs(phi);
-    etat(i) = phi(1)/phi(2);
+%     etat(i) = phi(1)/phi(2);
     pos_mean(i) = wmean((1:L)',nit(:,i),1);
     var_x2(i) = sqrt(wmean(((1:L)'-pos_mean(i)).^2,nit(:,i),1));
     Et(i) = real(phi'*H*phi);
@@ -104,9 +110,9 @@ xlabel('T')
 ylabel('variance')
 
 subplot(2,3,2)
-plot(T,nit(L_it,:))
-xlabel('T')
-ylabel('ni of L_it')
+plot(1:L,nit(:,end))
+xlabel('N')
+ylabel('final ni')
 
 subplot(2,3,3)
 plot(T,Et)
@@ -117,9 +123,10 @@ subplot(2,3,4)
 meshc(nit)
 
 subplot(2,3,5)
-plot(1:L,mu)
-xlabel('position')
-ylabel('random field')
+[~,it] = max(nit(:,end));
+plot(T,nit(it,:))
+xlabel('T')
+ylabel('ni of peak')
 
 dEt = Et(2:end) - Et(1:end-1);
 subplot(2,3,6)
@@ -176,8 +183,8 @@ for j = 1:L-1
     Tij(pos+L-len,pos) = Tij(pos+L-len,pos)-1;
     count = count +1;
 end
-Tij(len,len-L+1) = Tij(len,len-L+1)-s;
-Tij(len-L+1,len) = Tij(len-L+1,len)-conj(s);
+% Tij(len,len-L+1) = Tij(len,len-L+1)-s;
+% Tij(len-L+1,len) = Tij(len-L+1,len)-conj(s);
 Tij(len,L) = Tij(len,L)-1;
 Tij(L,len) = Tij(L,len)-1;
 count = count +1;

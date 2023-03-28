@@ -7,21 +7,22 @@ tic;
 myseed = 14;
 rng(myseed)
 
-dt = 0.01;
-T = 0:dt:10000*dt;
+dt = 1;
+T = 0:dt:100*dt;
 nt = length(T);
 L = 2;
 % L_it = floor(L/2);
 L_it = 1;
-K = -0;
+K = -4;
 mu_A = 2;
 % mu = mu_A*(2*rand(1,L)-1);
 mu = [0 0];
 Tij = gen_H(1,L);
-gamma = 0.1;
+gamma = 0.05;
 
 phi = zeros(L,1);
 phi(L_it) = 1;
+% phi = [-0.953749044673177 + 0.152890358352727i;-0.255556286302132 + 0.040966848051118i];
 % dn = 1;
 % phi(1) = sqrt((1+dn)/2);
 % phi(2) = sqrt(1-(1+dn)/2);

@@ -7,8 +7,8 @@ tic;
 myseed = 14;
 % rng(myseed)
 
-dt = 0.01;
-T = 0:dt:10000*dt;
+dt = 0.1;
+T = 0:dt:100*dt;
 nt = length(T);
 L = 2;
 % L_it = floor(L/2);
@@ -17,9 +17,9 @@ K = -0;
 mu_A = 2;
 % mu = mu_A*(2*rand(1,L)-1);
 mu = [0 0];
-gamma = 0.1;
+gamma = 0.5;
 Tij = gen_H(1,L);
-num = 1e2;
+num = 1e4;
 
 Et_final = zeros(1,nt);
 nit_final = zeros(1,nt);
@@ -53,12 +53,47 @@ for n = 1:num
     H00 = Tij + diag(mu);
     H0 = H00 + K*diag(nit(:,1));
     Et(1) = phi'*H0*phi;
-    pos_mean = zeros(nt,1);
-    var_x2 = zeros(nt,1);
+    pos_mean = zeros(1,nt);
+    var_x2 = zeros(1,nt);
     pos_mean(1) = wmean((1:L)',abs(phi).^2,1);
     var_x2(1) = sqrt(wmean(((1:L)'-pos_mean(1)).^2,abs(phi).^2,1));
 
-    % exact ED %%%%%%%%%%%%%%%%%%%%%%%%
+%     % exact ED %%%%%%%%%%%%%%%%%%%%%%%%
+% 
+%     for i = 2:nt
+%         envir = sqrt(gamma/dt)*(randn)*[1;-1];
+%         envir = diag(envir);
+% 
+%         H1 = H00 + K*diag(nit_now) + envir;
+%         %     phi = expm(-1i*H*dt)*phi;
+%         [V1,D1] = eig(H1);
+%         e1 = diag(D1);
+%         trans = V1'*phi;
+%         phi1 = V1*(exp(-1i*e1*dt).*trans);
+%         nit1 = abs(phi1).^2;
+% 
+%         H2 = H00 + K*diag(nit1) + envir;
+%         [V2,D2] = eig(H2);
+%         e2 = diag(D2);
+%         trans = V2'*phi;
+%         phi2 = V2*(exp(-1i*e2*dt).*trans);
+%         phi = (phi1+phi2)/2;
+% 
+%         nit(:,i) = abs(phi).^2;
+%         nit_now = nit(:,i);
+%         phit(:,i) = abs(phi);
+%         etat(i) = phi(1)/phi(2);
+%         pos_mean(i) = wmean((1:L)',nit(:,i),1);
+%         var_x2(i) = sqrt(wmean(((1:L)'-pos_mean(i)).^2,nit(:,i),1));
+%         Et(i) = real(phi'*H1*phi);
+% 
+%         rho = phi*phi';
+%         rhot(:,i) = rho(:);
+%         H0 = Tij + diag(mu) + K*diag(nit_now);
+% 
+%     end
+
+    % runge-kuta %%%%%%%%%%%%%%%%%%%%%%%%%
 
     for i = 2:nt
         envir = sqrt(gamma/dt)*(randn)*[1;-1];
@@ -66,17 +101,11 @@ for n = 1:num
 
         H1 = H00 + K*diag(nit_now) + envir;
         %     phi = expm(-1i*H*dt)*phi;
-        [V1,D1] = eig(H1);
-        e1 = diag(D1);
-        trans = V1'*phi;
-        phi1 = V1*(exp(-1i*e1*dt).*trans);
+        phi1 = myrunge(-1i*H1,phi,dt);
         nit1 = abs(phi1).^2;
 
         H2 = H00 + K*diag(nit1) + envir;
-        [V2,D2] = eig(H2);
-        e2 = diag(D2);
-        trans = V2'*phi;
-        phi2 = V2*(exp(-1i*e2*dt).*trans);
+        phi2 = myrunge(-1i*H2,phi,dt);
         phi = (phi1+phi2)/2;
 
         nit(:,i) = abs(phi).^2;
@@ -92,6 +121,7 @@ for n = 1:num
         H0 = Tij + diag(mu) + K*diag(nit_now);
 
     end
+
     Et_final = Et_final + Et;
     nit_final = nit_final + nit;
     pos_mean_final = pos_mean_final + pos_mean;

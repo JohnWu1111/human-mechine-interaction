@@ -5,7 +5,7 @@ format long
 tic;
 
 myseed = 14;
-rng(myseed)
+% rng(myseed)
 
 figure;
 
@@ -20,8 +20,10 @@ L = 2;
 % L = 16;
 % L_it = 50;
 K= -4;
-mu = [0 0];
-sigma_all = [0.2 0.09 0];
+mu = zeros(L,1);
+% sigma_all = [0.2 0.09 0];
+% sigma_all = [0.2 0.1 0.05 0];
+sigma_all = 0.2;
 nsigma = length(sigma_all);
 % mu_A = 2;
 % mu = mu_A*(2*rand(1,L)-1);
@@ -44,7 +46,7 @@ for n = 1:nsigma
     phi = zeros(L,1);
 %     phi(2) = sqrt(1/(1+abs(eta)^2));
 %     phi(1) = eta*phi(2);
-    phi(2) = 0;
+%     phi(2) = 0;
     phi(1) = 1;
     test = sum(abs(phi).^2);
 %     phi(L_it) = 1;
@@ -65,12 +67,36 @@ for n = 1:nsigma
     target(1,n+1) = Sz_mean(1);
 
     for i = 2:nt
-        H = Tij + diag(mu) + K*diag(nit(:,i-1)).*(1+randn(L,1)*sigma);
+%         H = Tij + diag(mu) + K*diag(nit(:,i-1)).*(1+randn(L,1)*sigma);
+%         H = Tij + diag(mu) + K*diag(nit(:,i-1)).*(1+(2*round(rand(L,1))-1)*sigma);
+%         H = Tij + diag(mu) + K*diag(nit(:,i-1)+randn(L,1)*sigma);
+%         a = nit(1,i-1)*(1+randn*sigma);
+%         if a > 1
+%             a = 1;
+%         elseif a < 0
+%             a = 0;
+%         end
+%         b = 1-a;
+            temp = 1+randn(L,1)*sigma;
+            nit_real = nit(:,i-1).*temp;
+%             nit_real = [nit(1,i-1)*temp(1);nit(2,i-1)*temp(2)];
+%             if nit_real(1) > 1
+%                 nit(1,i-1) = 1;
+%             elseif nit_real(1) < 0
+%                 nit(1,i-1) = 0;
+%             end
+%             if nit_real(2) > 1
+%                 nit(2,i-1) = 1;
+%             elseif nit_real(2) < 0
+%                 nit(2,i-1) = 0;
+%             end
+        H = Tij + diag(mu) + K*diag(nit_real);
         %     phi = expm(-1i*H*dt)*phi;
         [V,D] = eig(H);
         e = diag(D);
         trans = V'*phi;
         phi = V*(exp(-1i*e*dt).*trans);
+        
         nit(:,i) = abs(phi).^2;
         phit(:,i) = phi;
         Et(i) = real(phi'*H*phi);

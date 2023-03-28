@@ -8,10 +8,10 @@ myseed = 5;
 rng(myseed)
 
 step = 1000;
-L = 50;
+L = 101;
 K = -1;
 mu = 0*(2*rand(L,1)-1);
-L_it = 25;
+L_it = floor(L/2)+1;
 % for i = 1:6
 %     ni = rand(L,1);
 % end
@@ -20,7 +20,7 @@ ni(L_it) = 1;
 nit0 = ni./sum(ni);
 nit = zeros(L,step);
 nit(:,1) = nit0;
-Tij = gen_H(1,L);
+Tij = gen_H(exp(1i*pi/6),L);
 E_step = zeros(1,step);
 
 target = 1;
