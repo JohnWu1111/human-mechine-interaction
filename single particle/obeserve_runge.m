@@ -10,13 +10,14 @@ rng(myseed)
 dt = 1;
 T = 0:dt:10000*dt;
 nt = length(T);
-L = 61;
+L = 2;
 % L_it = floor(L/2);
-L_it = floor(L/2)+1;
-K = -1;
-mu_A = 2;
-% mu = mu_A*(2*rand(1,L)-1);
-mu = zeros(L,1);
+% L_it = floor(L/2)+1;
+L_it = 1;
+K = -4;
+mu_A = 0;
+mu = mu_A*(2*rand(1,L)-1);
+% mu = zeros(L,1);
 % Tij = gen_H_2(1,sqrt(L),L);
 Tij = gen_H(1,L);
 
@@ -102,7 +103,7 @@ end
 
 filename = strcat('L = ',num2str(L), ', mu_A = ', num2str(mu_A), ', K = ', num2str(K), ', seed = ', num2str(myseed), ', dt = ', num2str(dt),', L_it = ',num2str(L_it));
 figure('Name',filename);
-set(gcf, 'position', [250 70 1900 900]);
+set(gcf, 'position', [100 70 1900 900]);
 
 subplot(2,3,1)
 plot(T,var_x2)
@@ -151,8 +152,8 @@ for i = 1:L-1
     Tij(i+1,i) = Tij(i+1,i)-conj(s);    
     count = count +1;    
 end
-% Tij(L,1) = Tij(L,1)-s;
-% Tij(1,L) = Tij(1,L)-conj(s);
+Tij(L,1) = Tij(L,1)-s;
+Tij(1,L) = Tij(1,L)-conj(s);
 count = count +1;
 end
 

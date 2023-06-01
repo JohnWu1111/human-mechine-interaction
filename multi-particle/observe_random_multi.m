@@ -7,14 +7,15 @@ tic;
 myseed = 1;
 rng(myseed)
 
-dt = 1;
-T = 0:dt:500*dt;
+dt = 0.01;
+T = 0:dt:1000*dt;
 nt = length(T);
-L = 100;
+L = 300;
 % L_it = floor(L/2);
-K_all = -1:-0.1:-2;
+% K_all = -1:-0.1:-2;
+K_all = -1:-1:-10;
 nK = length(K_all);
-mu_A = 2;
+mu_A = 0;
 mu = mu_A*(2*rand(1,L)-1);
 % mu = [0.5 0];
 Tij = gen_H(1,L);

@@ -8,7 +8,7 @@ myseed = 2;
 rng(myseed)
 
 dt = 1;
-T = 0:dt:100000*dt;
+T = 0:dt:1000*dt;
 nt = length(T);
 L = 8;
 len = 2^L;

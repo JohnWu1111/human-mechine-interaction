@@ -4,30 +4,37 @@ clc;
 format long
 tic;
 
-myseed = 14;
+myseed = 2;
 rng(myseed)
 
-dt = 1;
-T = 0:dt:10000*dt;
-nt = length(T);
-L = 2;
-% L_it = floor(L/2);
-L_it = 1;
-K = -2;
-mu_A = 2;
-% mu = mu_A*(2*rand(1,L)-1);
-mu = zeros(L,1);
-Tij = gen_H(1,L);
-omega = 0.001;
-field = 2+1.5*cos(omega*T*pi);
+dt0 = 1;
+sigma = 0.00;
+nt = 10000;
+t = zeros(nt,1);
+t(1) = 0;
 
-phi = zeros(L,1);
+L = 100;
+% L_it = floor(L/2);
+L_it = floor(L/2)+1;
+K = -4;
+mu_A = 0;
+mu = mu_A*(2*rand(1,L)-1);
+% mu = zeros(L,1);
+% Tij = gen_H_2(1,sqrt(L),L);
+Tij = gen_H(1,L);
+
+% phi = zeros(L,1);
+% ss = 8;
+% phi(L_it-ss) = 1;
+% phi(L_it+ss) = 1;
 % phi(L_it) = 1;
-dn = 0.1;
-phi(1) = sqrt((1+dn)/2);
-phi(2) = sqrt(1-(1+dn)/2);
-% phi = rand(L,1);
-% phi = phi./sqrt(sum(abs(phi).^2));
+
+% dn = 0.1;
+% phi(1) = sqrt((1+dn)/2);
+% phi(2) = sqrt(1-(1+dn)/2);
+phi = rand(L,1);
+% phi = rand(L,1) + rand(L,1)*1i;
+phi = phi./sqrt(sum(abs(phi).^2));
 
 Et = zeros(1,nt);
 nit = zeros(L,nt);
@@ -35,21 +42,25 @@ phit = zeros(L,nt);
 nit0 = abs(phi).^2;
 nit(:,1) = abs(phi).^2;
 phit(:,1) = phi;
-etat = zeros(nt,1);
-etat(1) = phi(1)/phi(2);
+% etat = zeros(nt,1);
+% etat(1) = phi(1)/phi(2);
 
 H = Tij + diag(mu) + K*diag(nit(:,1));
-Et(1) = phi'*H*phi;
+Et(1) = real(phi'*H*phi);
 pos_mean = zeros(nt,1);
 var_x2 = zeros(nt,1);
 pos_mean(1) = wmean((1:L)',abs(phi).^2,1);
 var_x2(1) = sqrt(wmean(((1:L)'-pos_mean(1)).^2,abs(phi).^2,1));
 
+rng('shuffle')
 
 % exact ED %%%%%%%%%%%%%%%%%%%%%%%%
 
 for i = 2:nt
-    H = Tij + diag(mu) + K*diag(nit(:,i-1))*field(i);
+    dt = max(dt0*(1+randn*sigma),0);
+%     dt = dt0*rand;
+    t(i) = t(i-1) + dt;
+    H = Tij + diag(mu) + K*diag(nit(:,i-1));
 %     phi = expm(-1i*H*dt)*phi;
     [V,D] = eig(H);
     e = diag(D);
@@ -57,7 +68,7 @@ for i = 2:nt
     phi = V*(exp(-1i*e*dt).*trans);
     nit(:,i) = abs(phi).^2;
     phit(:,i) = abs(phi);
-    etat(i) = phi(1)/phi(2);
+%     etat(i) = phi(1)/phi(2);
     pos_mean(i) = wmean((1:L)',nit(:,i),1);
     var_x2(i) = sqrt(wmean(((1:L)'-pos_mean(i)).^2,nit(:,i),1));
     Et(i) = real(phi'*H*phi);
@@ -98,41 +109,38 @@ end
 
 filename = strcat('L = ',num2str(L), ', mu_A = ', num2str(mu_A), ', K = ', num2str(K), ', seed = ', num2str(myseed), ', dt = ', num2str(dt),', L_it = ',num2str(L_it));
 figure('Name',filename);
-set(gcf, 'position', [250 70 1900 900]);
+set(gcf, 'position', [100 70 1800 900]);
 
 subplot(2,3,1)
-plot(T,var_x2)
+plot(t,var_x2)
 xlabel('T')
 ylabel('variance')
 
 subplot(2,3,2)
-plot(T,nit(L_it,:))
-xlabel('T')
-ylabel('ni of L_it')
+plot(1:L,nit(:,end))
+xlabel('N')
+ylabel('final ni')
 
 subplot(2,3,3)
-plot(T,Et)
+plot(t,Et)
 xlabel('T')
 ylabel('energy')
 
 subplot(2,3,4)
 meshc(nit)
 
-% subplot(2,3,5)
-% plot(1:L,mu)
-% xlabel('position')
-% ylabel('random field')
 subplot(2,3,5)
-plot(T,field)
+[~,it] = max(nit(:,end));
+plot(t,nit(it,:))
 xlabel('T')
-ylabel('driven field')
+ylabel('ni of peak')
 
 dEt = Et(2:end) - Et(1:end-1);
 subplot(2,3,6)
 % plot(T(floor(nt/2)+1:end),dEt(floor(nt/2):end))
 % xlabel('T')
 % ylabel('dE')
-plot(T,pos_mean)
+plot(t,pos_mean)
 xlabel('T')
 ylabel('pos_mean')
 
@@ -182,8 +190,8 @@ for j = 1:L-1
     Tij(pos+L-len,pos) = Tij(pos+L-len,pos)-1;
     count = count +1;
 end
-Tij(len,len-L+1) = Tij(len,len-L+1)-s;
-Tij(len-L+1,len) = Tij(len-L+1,len)-conj(s);
+% Tij(len,len-L+1) = Tij(len,len-L+1)-s;
+% Tij(len-L+1,len) = Tij(len-L+1,len)-conj(s);
 Tij(len,L) = Tij(len,L)-1;
 Tij(L,len) = Tij(L,len)-1;
 count = count +1;
