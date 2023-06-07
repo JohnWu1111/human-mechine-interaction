@@ -1,4 +1,6 @@
 clear;
+clc;
+format long
 tic;
 
 L = 2000;
