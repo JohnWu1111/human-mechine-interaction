@@ -4,13 +4,13 @@ clc;
 format long
 tic;
 
-myseed = 5;
+myseed = 1;
 rng(myseed)
 
 dt = 1;
-T = 0:dt:100*dt;
+T = 0:dt:400*dt;
 nt = length(T);
-L = 500;
+L = 256;
 % L_it = floor(L/2);
 K = -6;
 mu_A = 2;
@@ -18,11 +18,12 @@ mu = mu_A*(2*rand(1,L)-1);
 % mu = [0.5 0];
 Tij = gen_H(1,L);
 H1 = Tij + diag(mu);
+num = 1000;
 
 AF = zeros(L,1);
+order_mean = zeros(num,1);
 
-Et = zeros(1,nt);
-order = zeros(1,nt);
+% Et = zeros(1,nt);
 
 % nit0 = zeros(L,1);
 % for i = 1:L
@@ -36,122 +37,93 @@ order = zeros(1,nt);
 % nit0 = rand(L,1);
 % nit0 = L/2*nit0/sum(nit0);
 
-temp = randperm(L);
+parfor n = 1:num
 
-nit0 = zeros(1,L);
-for i = 1:L/2
-    nit0(temp(i)) = 1;
-end
+    temp = randperm(L);
 
-G = diag(nit0);
-nit(:,1) = nit0;
-% order(1) = nit(:,1)'*AF/L;
-order(1) = nit(:,1)'*((-1).^(nit0'+1))/L;
+    nit0 = zeros(L,1);
+    for i = 1:L/2
+        nit0(temp(i)) = 1;
+    end
 
-H = H1 + K*diag(nit(:,1));
-Et(1) = cal_energy(G,mu,K);
+    order = zeros(1,nt);
+    G = diag(nit0);
+    nit_it = nit0;
+    % order(1) = nit(:,1)'*AF/L;
+    order(1) = nit_it'*((-1).^(nit0+1))/L;
 
+    % H = H1 + K*diag(nit(:,1));
+    % Et(1) = cal_energy(G,mu,K);
 
-% expH %%%%%%%%%%%%%%%%%%%%%%%%
+    % expH %%%%%%%%%%%%%%%%%%%%%%%%
 
-for i = 2:nt
-    H = H1 + K*diag(nit(:,i-1));
-%     expH = expm(-1i*H*dt);
-%     G = expH'*G*expH;
-    [V,D] = eig(H);
-    e = diag(D);
-    expH = exp(-1i*e*dt);
-    V_trans = V';
-    expHV = expH.*V_trans;
-    G = V_trans*G*V;
-    G = expHV'*G*expHV;
-    nit(:,i) = real(diag(G));
-    Et(i) = cal_energy(G,mu,K);
-%     order(i) = nit(:,i)'*AF/L;
-    order(i) = nit(:,i)'*((-1).^(nit0'+1))/L;
+    for i = 2:nt
+        H = H1 + K*diag(nit_it);
+        %     expH = expm(-1i*H*dt);
+        %     G = expH'*G*expH;
+        [V,D] = eig(H);
+        e = diag(D);
+        expH = exp(-1i*e*dt);
+        V_trans = V';
+        expHV = expH.*V_trans;
+        G = V_trans*G*V;
+        G = expHV'*G*expHV;
+        nit_it = real(diag(G));
+        %     Et(i) = cal_energy(G,mu,K);
+        %     order(i) = nit(:,i)'*AF/L;
+        order(i) = nit_it'*((-1).^(nit0+1))/L;
+    end
+    order_mean(n) = mean(order(floor(nt/2):end),2);
 end
 
 % repeating ED %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-diag_step = 1000;
-nit_diag = zeros(L,diag_step);
-nit_diag(:,1) = nit0;
-for i = 2:diag_step
-    H = H1 + K*diag(nit_diag(:,i-1));
-    [V,D] = eig(H);
-    e = diag(D);
-    nit_diag(:,i) = sum(abs(V(:,1:L/2)).^2,2);
-end
-E_diag = sum(e(1:L/2));
+% diag_step = 1000;
+% nit_diag = zeros(L,diag_step);
+% nit_diag(:,1) = nit0;
+% for i = 2:diag_step
+%     H = H1 + K*diag(nit_diag(:,i-1));
+%     [V,D] = eig(H);
+%     e = diag(D);
+%     nit_diag(:,i) = sum(abs(V(:,1:L/2)).^2,2);
+% end
+% E_diag = sum(e(1:L/2));
 
 filename = strcat('L = ',num2str(L), ', mu_A = ', num2str(mu_A), ', K = ', num2str(K), ', seed = ', num2str(myseed), ', dt = ', num2str(dt));
 figure('Name',filename);
 set(gcf, 'position', [250 70 1500 900]);
+histogram(order_mean,100,'BinLimits',[0 0.5],'Normalization','pdf','DisplayStyle','stairs')
 
-subplot(2,2,1)
-plot(T,Et)
-xlabel('T')
-ylabel('energy')
-
-subplot(2,2,2)
-plot(T,order)
-xlabel('T')
-ylabel('AF order')
-
-subplot(2,2,3)
-plot(1:L,mu)
-xlabel('position')
-ylabel('random field')
-
-subplot(2,2,4)
-plot(1:L,nit(:,end),1:L,nit_diag(:,end))
-xlabel('position')
-ylabel('nit')
-legend('final nit','GS nit')
-
-% subplot(2,3,1)
-% plot(T,var_x2)
-% xlabel('T')
-% ylabel('variance')
-% 
-% subplot(2,3,2)
-% plot(T,nit(L_it,:))
-% xlabel('T')
-% ylabel('ni of L_it')
-% 
-% subplot(2,3,3)
+% subplot(2,2,1)
 % plot(T,Et)
 % xlabel('T')
 % ylabel('energy')
-% 
-% subplot(2,3,4)
-% meshc(nit)
-% 
-% subplot(2,3,5)
+%
+% subplot(2,2,2)
+% plot(T,order)
+% xlabel('T')
+% ylabel('AF order')
+%
+% subplot(2,2,3)
 % plot(1:L,mu)
 % xlabel('position')
 % ylabel('random field')
-% 
-% dEt = Et(2:end) - Et(1:end-1);
-% subplot(2,3,6)
-% % plot(T(floor(nt/2)+1:end),dEt(floor(nt/2):end))
-% % xlabel('T')
-% % ylabel('dE')
-% plot(T,pos_mean)
-% xlabel('T')
-% ylabel('pos_mean')
-
-% saveas(gcf,strcat('figures\',filename,'.fig'))
+%
+% subplot(2,2,4)
+% plot(1:L,nit(:,end),1:L,nit_diag(:,end))
+% xlabel('position')
+% ylabel('nit')
+% legend('final nit','GS nit')
 
 toc;
 
 function Tij = gen_H(s,L)
 Tij = zeros(L);
 count = 0;
-for i = 1:L-1    
+for i = 1:L-1
     Tij(i,i+1) = Tij(i,i+1)-s;
-    Tij(i+1,i) = Tij(i+1,i)-conj(s);    
-    count = count +1;    
+    Tij(i+1,i) = Tij(i+1,i)-conj(s);
+    count = count +1;
 end
 Tij(L,1) = Tij(L,1)-s;
 Tij(1,L) = Tij(1,L)-conj(s);
@@ -201,7 +173,7 @@ y = phi + dt*(c1+2*c2+2*c3+c4)/6;
 end
 
 function y = wmean(x,phi,dx)
-    y = sum(x.*phi)*dx;
+y = sum(x.*phi)*dx;
 end
 
 function y = cal_energy(G,mu,K)

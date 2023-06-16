@@ -18,7 +18,7 @@ T = 100;
 L = 2;
 L_it = 1;
 K = -1;
-mu = [0.5 -0.5];
+mu = [-0.5 0.5];
 % mu_A = 2;
 % mu = mu_A*(2*rand(1,L)-1);
 % mu(L_it) = 0;
@@ -32,7 +32,7 @@ target = target + nan;
 
 phi_0 = zeros(L,1);
 % phi_0(L_it) = 1;
-dn = 0.9;
+dn = 1;
 phi_0(1) = sqrt((1+dn)/2);
 phi_0(2) = sqrt((1-dn)/2);
 
@@ -131,6 +131,10 @@ legend(le)
 % ylabel('<n_{it} final>','FontSize',14)
 
 toc;
+
+
+
+
 
 function Tij = gen_H(s,L)
 Tij = zeros(L);
