@@ -45,6 +45,11 @@ for i = 2:nt
     end
 end
 
+tele_f = fft(tele);
+tele_f_abs = abs(tele_f);
+dw = 2*pi/T_max;
+w = 0:dw:2*pi/dt;
+
 figure
 set(gcf, 'position', [100 70 1700 900]);
 subplot(2,2,1)
@@ -61,5 +66,10 @@ subplot(2,2,3)
 plot(t,tele)
 xlabel('t')
 ylabel('noise')
+
+subplot(2,2,4)
+plot(w,tele_f_abs)
+xlabel('w')
+ylabel('noise_f')
 
 toc;

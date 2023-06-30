@@ -80,7 +80,7 @@ figure('Name',filename);
 f = plot(T,order);
 xlabel('t')
 ylabel('I_n')
-legend('run1','run2','run3')
+legend('initial state 1','initial state 2','initial state 3')
 
 % subplot(2,2,1)
 % plot(T,Et)
